@@ -46,15 +46,21 @@ func (b *Boid) calcAcceleration() Vector2D {
 	count := 0.0
 
 	for i := math.Max(low.x, 0); i <= math.Min(up.x, screenWidth); i++ {
-		for j := math.Max(low.y, 0); j < math.Min(up.y, screenHeight); j++ {
-			//bid := boidMap[][]
+		for j := math.Max(low.y, 0); j <= math.Min(up.y, screenHeight); j++ {
+			if bid := boidMap[int(i)][int(j)]; bid != -1 && bid != b.id {
+				if dist := boids[bid].position.Distance(b.position); dist < viewRadius {
+					count++
+					avgVelocity = avgVelocity.Add(boids[bid].velocity)
+				}
+			}
 		}
 	}
 
-	return Vector2D{
-		x: 0,
-		y: 0,
+	if count > 0 {
+		avgVelocity = avgVelocity.DivVal(count)
 	}
+
+	return avgVelocity.Sub(b.velocity).MultiVal(adjRate)
 }
 
 func createBoid(bid int) {
