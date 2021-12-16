@@ -1,6 +1,7 @@
 package main
 
 import (
+	"math"
 	"math/rand"
 	"time"
 )
@@ -19,7 +20,11 @@ func (b *Boid) start() {
 }
 
 func (b *Boid) moveOne() {
+	b.velocity = b.velocity.Add(b.calcAcceleration()).limit(-1, 1)
+	boidMap[int(b.position.x)][int(b.position.y)] = -1
 	b.position = b.position.Add(b.velocity)
+	boidMap[int(b.position.x)][int(b.position.y)] = b.id
+
 	next := b.position.Add(b.velocity)
 	if next.x >= screenWidth || next.x < 0 {
 		b.velocity = Vector2D{
@@ -35,6 +40,23 @@ func (b *Boid) moveOne() {
 	}
 }
 
+func (b *Boid) calcAcceleration() Vector2D {
+	up, low := b.position.AddVal(viewRadius), b.position.AddVal(-viewRadius)
+	avgVelocity := Vector2D{x: 0, y: 0}
+	count := 0.0
+
+	for i := math.Max(low.x, 0); i <= math.Min(up.x, screenWidth); i++ {
+		for j := math.Max(low.y, 0); j < math.Min(up.y, screenHeight); j++ {
+			//bid := boidMap[][]
+		}
+	}
+
+	return Vector2D{
+		x: 0,
+		y: 0,
+	}
+}
+
 func createBoid(bid int) {
 	b := Boid{
 		position: Vector2D{
@@ -47,6 +69,7 @@ func createBoid(bid int) {
 		},
 		id: bid,
 	}
+	boidMap[int(b.position.x)][int(b.position.y)] = bid
 	boids[bid] = &b
 	go b.start()
 }
