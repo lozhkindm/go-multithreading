@@ -21,7 +21,7 @@ func (b *Boid) start() {
 
 func (b *Boid) moveOne() {
 	accel := b.calcAcceleration()
-	lock.Lock()
+	rwLock.Lock()
 	b.velocity = b.velocity.Add(accel).limit(-1, 1)
 	boidMap[int(b.position.x)][int(b.position.y)] = -1
 	b.position = b.position.Add(b.velocity)
@@ -40,16 +40,17 @@ func (b *Boid) moveOne() {
 			y: -b.velocity.y,
 		}
 	}
-	lock.Unlock()
+	rwLock.Unlock()
 }
 
 func (b *Boid) calcAcceleration() Vector2D {
 	up, low := b.position.AddVal(viewRadius), b.position.AddVal(-viewRadius)
 	avgVelocity := Vector2D{x: 0, y: 0}
 	avgPosition := Vector2D{x: 0, y: 0}
+	separation := Vector2D{x: 0, y: 0}
 	count := 0.0
 
-	lock.Lock()
+	rwLock.RLock()
 	for i := math.Max(low.x, 0); i <= math.Min(up.x, screenWidth); i++ {
 		for j := math.Max(low.y, 0); j <= math.Min(up.y, screenHeight); j++ {
 			if bid := boidMap[int(i)][int(j)]; bid != -1 && bid != b.id {
@@ -57,22 +58,36 @@ func (b *Boid) calcAcceleration() Vector2D {
 					count++
 					avgVelocity = avgVelocity.Add(boids[bid].velocity)
 					avgPosition = avgPosition.Add(boids[bid].position)
+					separation = separation.Add(b.position.Sub(boids[bid].position).DivVal(dist))
 				}
 			}
 		}
 	}
-	lock.Unlock()
+	rwLock.RUnlock()
 
-	accel := Vector2D{x: 0, y: 0}
+	accel := Vector2D{
+		x: b.borderBounce(b.position.x, screenWidth),
+		y: b.borderBounce(b.position.y, screenHeight),
+	}
 	if count > 0 {
 		avgVelocity = avgVelocity.DivVal(count)
 		avgPosition = avgPosition.DivVal(count)
 		accelAlignment := avgVelocity.Sub(b.velocity).MultiVal(adjRate)
 		accelCohesion := avgPosition.Sub(b.position).MultiVal(adjRate)
-		accel = accel.Add(accelAlignment).Add(accelCohesion)
+		accelSeparation := separation.MultiVal(adjRate)
+		accel = accel.Add(accelAlignment).Add(accelCohesion).Add(accelSeparation)
 	}
 
 	return accel
+}
+
+func (b *Boid) borderBounce(pos, borderPos float64) float64 {
+	if pos < viewRadius {
+		return 1 / pos
+	} else if pos > borderPos-viewRadius {
+		return 1 / (pos - borderPos)
+	}
+	return 0
 }
 
 func createBoid(bid int) {
