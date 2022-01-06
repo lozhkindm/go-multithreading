@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/hajimehoshi/ebiten"
+	"github.com/lozhkindm/go-multithreading/deadlocks_trains/arbitrator"
 	"github.com/lozhkindm/go-multithreading/deadlocks_trains/common"
-	"github.com/lozhkindm/go-multithreading/deadlocks_trains/hierarchy"
 	"log"
 	"sync"
 )
@@ -32,7 +32,7 @@ func main() {
 		isecs[i] = &common.Intersection{Id: i, Mx: sync.Mutex{}, LockedBy: -1}
 	}
 
-	go hierarchy.MoveTrain(
+	go arbitrator.MoveTrain(
 		trains[0],
 		300,
 		[]*common.Crossing{
@@ -41,7 +41,7 @@ func main() {
 		},
 	)
 
-	go hierarchy.MoveTrain(
+	go arbitrator.MoveTrain(
 		trains[1],
 		300,
 		[]*common.Crossing{
@@ -50,7 +50,7 @@ func main() {
 		},
 	)
 
-	go hierarchy.MoveTrain(
+	go arbitrator.MoveTrain(
 		trains[2],
 		300,
 		[]*common.Crossing{
@@ -59,7 +59,7 @@ func main() {
 		},
 	)
 
-	go hierarchy.MoveTrain(
+	go arbitrator.MoveTrain(
 		trains[3],
 		300,
 		[]*common.Crossing{
